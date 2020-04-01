@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="galaxy" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Option show_notes="0">
+			<notes>
+				<![CDATA[Add different sub types of rooms
+commercial - retail stores, fast food, dining
+residential - hotel rooms, apartments, condos
+job - offices
+building owned - bathrooms, security offices, parking spaces, elevators, lobby
+
+commercial rooms benefit from being near high traffic tiles.
+residential rooms want low noise levels
+job rooms want medium to low noise and traffic levels
+--DONE
+
+Create a demand set of stats for the city. Base whether things are rented based on that.
+--KIND OF DONE
+
+---- TODO ----
+add multiple people types.
+worker--arrives because of "job" type rooms. focuses on increasing the "work" stat, doesn't need "fun" or "sleep"
+tenant--arrives because of "sleep" rooms. focuses on "sleep", doesn't need "work"
+consumer--arrives because of "fun" or "hunger" rooms. focuses on both "fun" and "hunger" stats, doesn't need "work" or "sleep"
+vip--arrives when having high values in all room types. desires to fullfill all stats.
+
+Add in "fire alarm", basically a building evacuation button, for the eventual disasters
+
+--MORE--
+bananas.
+
+the crash when the game is closed seems to occur ONLY if the game is exited without opening a window in the GUI system.
+it's possible/likely that this is part of the problem
+still not sure what's causing this, debugging doesn't seem to help either as it crashes in std libraries]]>
+			</notes>
+		</Option>
+		<Build>
+			<Target title="Development">
+				<Option output="galaxy" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG=true" />
+					<Add option="-DDEVELOP=true" />
+					<Add option="-DFLOOR_COUNT=5" />
+					<Add option="-DDEMO=false" />
+				</Compiler>
+			</Target>
+			<Target title="Release (DEMO)">
+				<Option output="Release/galaxy" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DDEBUG=false" />
+					<Add option="-DDEVELOP=false" />
+					<Add option="-DFLOOR_COUNT=15" />
+					<Add option="-DDEMO=true" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-m32" />
+			<Add option="-DSFML_STATIC" />
+			<Add directory="C:/SFML-2.2/include" />
+			<Add directory="C:/development/Isotower/" />
+		</Compiler>
+		<Linker>
+			<Add option="-m32" />
+			<Add option="-std=c++11" />
+			<Add option="-lole32" />
+			<Add option="-static-libgcc" />
+			<Add library="C:\SFML-2.2\lib\libfreetype.a" />
+			<Add library="C:\SFML-2.2\lib\libglew.a" />
+			<Add library="C:\SFML-2.2\lib\libjpeg.a" />
+			<Add library="C:\SFML-2.2\lib\libopenal32.a" />
+			<Add library="C:\SFML-2.2\lib\libsndfile.a" />
+			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libwinmm.a" />
+			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libgdi32.a" />
+			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libopengl32.a" />
+			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libglaux.a" />
+			<Add library="C:\SFML-2.2\lib\libsfml-main.a" />
+			<Add library="C:\SFML-2.2\lib\libsfml-system.a" />
+			<Add library="C:\SFML-2.2\lib\libsfml-window.a" />
+			<Add library="C:\SFML-2.2\lib\libsfml-graphics.a" />
+			<Add library="C:\SFML-2.2\lib\libsfml-audio.a" />
+			<Add library="C:\SFML-2.2\lib\libsfml-network.a" />
+			<Add directory="C:/SFML-2.2/lib" />
+		</Linker>
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<AutoVersioning>
+				<Scheme minor_max="10" build_max="0" rev_max="0" rev_rand_max="10" build_times_to_increment_minor="100" />
+				<Settings autoincrement="1" date_declarations="1" use_define="0" update_manifest="1" do_auto_increment="0" ask_to_increment="0" language="C++" svn="0" svn_directory="" header_path="version.h" />
+				<Changes_Log show_changes_editor="0" app_title="released version %M.%m.%b of %p" changeslog_path="ChangesLog.txt" />
+				<Code header_guard="VERSION_H" namespace="AutoVersion" prefix="" />
+			</AutoVersioning>
+			<envvars />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
