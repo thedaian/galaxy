@@ -11,12 +11,15 @@ private:
     void generateStarGraphic(sf::Vertex*, const sf::Vector2f&, const uint8_t&, sf::Color, const bool&);
 
     sf::VertexArray m_vertices;
+    sf::VertexArray m_lines;
+    bool m_displayGrid;
 public:
-    bool load(const std::vector<Star::star>&);
+    void load(const std::vector<Star::star>&, const unsigned int&, const unsigned int&, const int&);
     void update(const int&, const bool&);
+    void toggleGrid();
 };
 
-bool starmapRender::load(const std::vector<Star::star>& starlist)
+void starmapRender::load(const std::vector<Star::star>& starlist, const unsigned int& _width, const unsigned int& _height, const int& TILE_SIZE)
 {
     m_vertices.clear();
 
@@ -31,7 +34,27 @@ bool starmapRender::load(const std::vector<Star::star>& starlist)
         i += 15;
     }
 
-    return true;
+    m_lines.clear();
+    unsigned int _x(_width/TILE_SIZE), _y(_height/TILE_SIZE);
+
+    m_lines.setPrimitiveType(sf::Lines);
+    m_lines.resize(_x * _y * 2);
+
+    for(i = 0; i < _x; i++)
+    {
+        m_lines[i * 2].position = sf::Vector2f(0, i * TILE_SIZE);
+        m_lines[(i * 2) + 1].position = sf::Vector2f(_width, i * TILE_SIZE);
+        m_lines[i * 2].color = sf::Color(128, 128, 128, 96);
+        m_lines[(i * 2) + 1].color = sf::Color(128, 128, 128, 96);
+    }
+    for(; i < (_y * _x); i++)
+    {
+        m_lines[i * 2].position = sf::Vector2f((i - _x) * TILE_SIZE + TILE_SIZE/4, TILE_SIZE);
+        m_lines[(i * 2) + 1].position = sf::Vector2f((i - _x) * TILE_SIZE + TILE_SIZE/4, _height);
+        m_lines[i * 2].color = sf::Color(128, 128, 128, 96);
+        m_lines[(i * 2) + 1].color = sf::Color(128, 128, 128, 96);
+    }
+    m_displayGrid = true;
 }
 
 void starmapRender::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -41,6 +64,10 @@ void starmapRender::draw(sf::RenderTarget& target, sf::RenderStates states) cons
 
     // draw the vertex array
     target.draw(m_vertices, states);
+    if(m_displayGrid)
+    {
+        target.draw(m_lines, states);
+    }
 }
 
 void starmapRender::generateStarGraphic(sf::Vertex* quad, const sf::Vector2f& _pos, const uint8_t& _size, sf::Color _colour, const bool& _isPopulated)
@@ -109,6 +136,11 @@ void starmapRender::update(const int& index, const bool& _isPopulated)
         m_vertices[index + 13].color.a = 0;
         m_vertices[index + 14].color.a = 0;
     }
+}
+
+void starmapRender::toggleGrid()
+{
+    m_displayGrid = !m_displayGrid;
 }
 
 /***********************************************************************************

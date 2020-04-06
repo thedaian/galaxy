@@ -35,8 +35,7 @@ void takeScreenshot(sf::RenderWindow & window)
 void generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& _x)
 {
     _list.clear();
-    const uint8_t SEPERATION = (TILE_SIZE - (Star::STAR_SIZE * 2)/2);
-
+    const uint8_t SEPERATION = (Star::STAR_SIZE/2);
     unsigned short xOffset(0), yOffset(0), width(_x/TILE_SIZE);
     double totalCounts;
 
@@ -92,7 +91,7 @@ void generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& 
 
     while(yOffset + TILE_SIZE * 2 <= _y)
     {
-        _list.push_back(Star::star(getRandomInt(0, SEPERATION) + xOffset + SEPERATION/2, getRandomInt(0, SEPERATION) + yOffset + TILE_SIZE, typeDist.front(), _list.size()));
+        _list.push_back(Star::star(getRandomInt(SEPERATION, TILE_SIZE - SEPERATION) + xOffset + TILE_SIZE/4, getRandomInt(SEPERATION, TILE_SIZE - SEPERATION) + yOffset + TILE_SIZE, typeDist.front(), _list.size()));
         if(typeDist.front() == Star::type::G && homeworld > 0)
         {
             homeworld--;
@@ -151,6 +150,22 @@ void updateYear(sf::Text& _text, const unsigned int& year)
     _text.setString(t.str());
 }
 
+void save(const unsigned int& _year, const uint8_t& _year_clock, const std::vector<Star::star>& _starlist, const shipmapRender& _ships)
+{
+    year;
+    year_clock;
+    starlist;
+    ships;
+}
+
+void load(unsigned int& _year, uint8_t& _year_clock, std::vector<Star::star>& _starlist, shipmapRender& _ships)
+{
+    year;
+    year_clock;
+    starlist;
+    ships;
+}
+
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(1280, 960), "Space test: F8/F11 = Screenshot, Space = reset");
@@ -191,10 +206,12 @@ int main()
     generateStarmap(starlist, window.getSize().y, window.getSize().x);
 
     starmapRender starRender;
-    starRender.load(starlist);
+    starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
 
     shipmapRender shipRender;
     shipRender.load();
+
+    bool isPlaying = true;
 
     while (window.isOpen())
     {
@@ -221,14 +238,19 @@ int main()
                     case sf::Keyboard::F11:
                         takeScreenshot(window);
                         break;
-                    case sf::Keyboard::Return:
-                    case sf::Keyboard::Space:
+                    case sf::Keyboard::F12:
                         generateStarmap(starlist, window.getSize().y, window.getSize().x);
-                        starRender.load(starlist);
+                        starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
                         break;
-                    default:
+                    case sf::Keyboard::Space:
+                        isPlaying = !isPlaying;
+                        break;
+                    case sf::Keyboard::G:
+                        starRender.toggleGrid();
+                        break;
                     case sf::Keyboard::Escape:
                         window.close();
+                    default:
                         break;
                 }
             }
@@ -236,13 +258,15 @@ int main()
             {
                 if(abs(event.mouseMove.x - old_mouse_x) > 10 || abs(event.mouseMove.y - old_mouse_y) > 10)
                 {
-                    int _x = event.mouseMove.x/TILE_SIZE;
+                    int _x = (event.mouseMove.x - TILE_SIZE/4)/TILE_SIZE;
                     int _y = (event.mouseMove.y - TILE_SIZE)/TILE_SIZE;
                     currentSelection = (_y * width) + _x;
-                    if(currentSelection < starlist.size())
+                    if((currentSelection < starlist.size()) && currentSelection >= 0)
                     {
                         header.setString(starlist.at(currentSelection).toString());
                         cursor.setPosition(starlist.at(currentSelection).m_pos);
+                    } else {
+                        currentSelection = 0;
                     }
                     old_mouse_x = event.mouseMove.x;
                     old_mouse_y = event.mouseMove.y;
@@ -257,7 +281,7 @@ int main()
             }
         }
 
-        if(_timer.getElapsedTime().asMilliseconds() > 50)
+        if(isPlaying && _timer.getElapsedTime().asMilliseconds() > 50)
         {
             year_clock++;
             if(year_clock >= 100)
