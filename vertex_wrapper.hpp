@@ -230,16 +230,16 @@ public:
     bool load();
     void add(Star::star*, Star::star*);
     void update(starmapRender &);
+    std::vector<ship>::const_iterator shipsBegin() const { return m_ships.begin(); };
+    std::vector<ship>::const_iterator shipsEnd() const { return m_ships.end(); };
 };
 
-bool shipmapRender::load()
+shipmapRender::shipmapRender()
 {
     m_vertices.clear();
     m_vertices.setPrimitiveType(sf::Points);
 
     m_ships.clear();
-
-    return true;
 }
 
 void shipmapRender::add(Star::star* _pos, Star::star* _goal)

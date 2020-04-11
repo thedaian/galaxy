@@ -1,5 +1,7 @@
 #include <random>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
 
 #include <SFML/Graphics.hpp>
 #include "vertex_wrapper.hpp"
@@ -32,8 +34,9 @@ void takeScreenshot(sf::RenderWindow & window)
     number++;
 }
 
-void generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& _x)
+sf::Vector2f generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& _x)
 {
+    sf::Vector2f homeworld_pos;
     _list.clear();
     const uint8_t SEPERATION = (Star::STAR_SIZE/2);
     unsigned short xOffset(0), yOffset(0), width(_x/TILE_SIZE);
@@ -100,6 +103,7 @@ void generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& 
                 _list.back().m_production = _list.back().m_maxProduction/2;
                 _list.back().m_population = _list.back().m_maxPopulation/2;
                 _list.back().m_supplies = _list.back().m_maxProduction/2;
+                homeworld_pos = _list.back().m_pos;
             }
         }
         typeDist.erase(typeDist.begin());
@@ -130,14 +134,15 @@ void generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& 
             _list[i].add(&_list[i + width]);
         }
     }
+    return homeworld_pos;
 }
 
-bool addColony(Star::star& _star, shipmapRender& _ships)
+bool addColony(Star::star& _starar, shipmapRender& _ships)
 {
-    Star::star* nearby = _star.isNearbySupplied();
+    Star::star* nearby = _starar.isNearbySupplied();
     if(nearby != nullptr)
     {
-        _ships.add(nearby, &_star);
+        _ships.add(nearby, &_starar);
         return true;
     }
     return false;
@@ -152,18 +157,43 @@ void updateYear(sf::Text& _text, const unsigned int& year)
 
 void save(const unsigned int& _year, const uint8_t& _year_clock, const std::vector<Star::star>& _starlist, const shipmapRender& _ships)
 {
-    year;
-    year_clock;
-    starlist;
-    ships;
+    std::ofstream out("autosave.sav");
+    if(out.is_open())
+    {
+        out<<_year<<" "<<static_cast<unsigned int>(_year_clock)<<"\n";
+        for(auto _star = _starlist.begin(); _star != _starlist.end(); _star++)
+        {
+            out<<_star->m_pos.x<<" "<<_star->m_pos.y<<" "<<static_cast<unsigned int>(_star->m_size)<<" "<<static_cast<unsigned int>(_star->m_type)<<" "
+                <<_star->m_supplies<<" "<<_star->m_production<<" "<<_star->m_maxProduction<<" "<<_star->m_population<<" "<<_star->m_maxPopulation<<"\n";
+        }
+        out<<"-\n";
+        for(auto _ship = _ships.shipsBegin(); _ship != _ships.shipsEnd(); _ship++)
+        {
+            out<<_ship->m_pos->m_index<<" "<<_ship->m_goal->m_index<<" "<<static_cast<unsigned int>(_ship->dt)<<" "<<_ship->m_hasSupplies<<" "<<_ship->m_hasPopulation<<"\n";
+        }
+        out.close();
+    }
 }
 
-void load(unsigned int& _year, uint8_t& _year_clock, std::vector<Star::star>& _starlist, shipmapRender& _ships)
+bool load(unsigned int& _year, uint8_t& _year_clock, std::vector<Star::star>& _starlist, shipmapRender& _ships)
 {
-    year;
-    year_clock;
-    starlist;
-    ships;
+    std::ifstream in("autosave.sav");
+    if(in.is_open())
+    {
+        in>>_year>>" ">>_year_clock>>"\n";
+        for(auto _star = _starlist.begin(); _star != _starlist.end(); _star++)
+        {
+            in>>_star->m_pos.x>>" ">>_star->m_pos.y>>" ">>_star->m_size>>" ">>static_cast<int>(_star->m_type)>>" "
+                >>_star->m_supplies>>" ">>_star->m_production>>" ">>_star->m_maxProduction>>" ">>_star->m_population>>" ">>_star->m_maxPopulation>>"\n";
+        }
+        for(auto _ship = _ships.shipsBegin(); _ship != _ships.shipsEnd(); _ship++)
+        {
+            in>>_ship->m_pos->m_index>>" ">>_ship->m_goal->m_index>>" ">>_ship->dt>>" ">>_ship->m_hasSupplies>>" ">>_ship->m_hasPopulation>>"\n";
+        }
+        in.close();
+        return true;
+    }
+    return false;
 }
 
 int main()
@@ -203,15 +233,18 @@ int main()
     year_display.setPosition(0, 0);
 
     std::vector<Star::star> starlist;
-    generateStarmap(starlist, window.getSize().y, window.getSize().x);
-
     starmapRender starRender;
-    starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
-
     shipmapRender shipRender;
-    shipRender.load();
+    bool isPlaying(true), runIntro(false);
+    sf::Vector2f start_pos(0, 0);
 
-    bool isPlaying = true;
+    if(!load(year, year_clock, starlist, shipRender))
+    {
+        start_pos = generateStarmap(starlist, window.getSize().y, window.getSize().x);
+        starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
+        isPlaying = false;
+        runIntro = true;
+    }
 
     while (window.isOpen())
     {
@@ -309,6 +342,8 @@ int main()
         window.draw(cursor);
         window.display();
     }
+
+    save(year, year_clock, starlist, shipRender);
 
     return 0;
 }
