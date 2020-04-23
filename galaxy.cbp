@@ -62,10 +62,9 @@ still not sure what's causing this, debugging doesn't seem to help either as it 
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-std=gnu++11" />
 					<Add option="-DDEBUG=false" />
 					<Add option="-DDEVELOP=false" />
-					<Add option="-DFLOOR_COUNT=15" />
-					<Add option="-DDEMO=true" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />

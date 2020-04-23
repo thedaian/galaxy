@@ -68,7 +68,7 @@ sf::Vector2f generateStarmap(std::vector<Star::star> &_list, const int &_y, cons
     totalCounts = width;
     totalCounts = floor(totalCounts * ((_y/TILE_SIZE) - 1));
 
-    int homeworld;
+    int homeworld(1);
     int currentClassCount = totalCounts * 0.70;
     Star::type currentClass = Star::type::M;
     std::vector<Star::type> typeDist;
@@ -221,11 +221,11 @@ bool load(unsigned int &_year, uint8_t &_year_clock, std::vector<Star::star> &_s
 
 int main(int argc, char* argv[])
 {
-    sf::RenderWindow window(sf::VideoMode(1280, 960), "Space test: F8/F11 = Screenshot, Space = reset");
+    sf::RenderWindow window(sf::VideoMode(1280, 960), "Space Idle 4X");
     window.setFramerateLimit(60);
 
     int width = (window.getSize().x/TILE_SIZE);
-    unsigned int currentSelection(0), year(1234);
+    unsigned int currentSelection(0), year(1000);
     uint8_t year_clock(0);
     sf::Clock _timer;
     int old_mouse_x(0), old_mouse_y(0);
@@ -313,10 +313,6 @@ int main(int argc, char* argv[])
                     case sf::Keyboard::F8:
                     case sf::Keyboard::F11:
                         takeScreenshot(window);
-                        break;
-                    case sf::Keyboard::F12:
-                        generateStarmap(starlist, window.getSize().y, window.getSize().x);
-                        starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
                         break;
                     case sf::Keyboard::Space:
                         isPlaying = !isPlaying;
