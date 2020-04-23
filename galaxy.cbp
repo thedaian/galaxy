@@ -45,7 +45,9 @@ still not sure what's causing this, debugging doesn't seem to help either as it 
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option use_console_runner="0" />
+				<Option parameters="-auto" />
 				<Compiler>
+					<Add option="-std=gnu++11" />
 					<Add option="-g" />
 					<Add option="-DDEBUG=true" />
 					<Add option="-DDEVELOP=true" />
@@ -100,6 +102,8 @@ still not sure what's causing this, debugging doesn't seem to help either as it 
 			<Add directory="C:/SFML-2.2/lib" />
 		</Linker>
 		<Unit filename="main.cpp" />
+		<Unit filename="star.hpp" />
+		<Unit filename="vertex_wrapper.hpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

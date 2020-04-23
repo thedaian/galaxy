@@ -35,7 +35,9 @@ namespace Star {
         int m_index;
         std::vector<Star::star*> m_connected;
 
-        star(const int& _x, const int& _y, const Star::type& _s, const int& _index) {
+        star() {};
+
+        star(const int &_x, const int &_y, const Star::type &_s, const int &_index) {
             m_pos.x = _x;
             m_pos.y = _y;
             m_size = Star::STAR_SIZE + getRandomInt(-1, 1);
@@ -89,18 +91,18 @@ namespace Star {
             }
         }
 
-        void add(Star::star* c)
+        void add(Star::star *c)
         {
             m_connected.push_back(c);
         }
 
         Star::star* isNearbySupplied()
         {
-            for(auto n = m_connected.begin(); n < m_connected.end(); n++)
+            for(const auto &n : m_connected)
             {
-                if( ((*n)->m_supplies > Star::MIN_SUPPLIES) && ((*n)->m_population > Star::MIN_POP) )
+                if( (n->m_supplies > Star::MIN_SUPPLIES) && (n->m_population > Star::MIN_POP) )
                 {
-                    return (*n);
+                    return n;
                 }
             }
             return nullptr;
@@ -120,7 +122,6 @@ namespace Star {
                     m_production++;
                 }
             }
-
         }
 
         std::string toString() const

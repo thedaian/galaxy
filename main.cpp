@@ -21,7 +21,7 @@ int getRandomInt(int min, int max)
     return dis(gen);
 }
 
-void takeScreenshot(sf::RenderWindow & window)
+void takeScreenshot(sf::RenderWindow  &window)
 {
     static short number = 1;
 
@@ -34,7 +34,30 @@ void takeScreenshot(sf::RenderWindow & window)
     number++;
 }
 
-sf::Vector2f generateStarmap(std::vector<Star::star> & _list, const int& _y, const int& _x)
+void connectStars(std::vector<Star::star> &_list, const unsigned short &width)
+{
+    for(unsigned int i = 0; i < _list.size(); i++)
+    {
+        if(i%width != 0)
+        {
+            _list[i].add(&_list[i - 1]);
+        }
+        if((i + 1)%width != 0)
+        {
+            _list[i].add(&_list[i + 1]);
+        }
+        if(i > width)
+        {
+            _list[i].add(&_list[i - width]);
+        }
+        if(i + width < _list.size())
+        {
+            _list[i].add(&_list[i + width]);
+        }
+    }
+}
+
+sf::Vector2f generateStarmap(std::vector<Star::star> &_list, const int &_y, const int &_x)
 {
     sf::Vector2f homeworld_pos;
     _list.clear();
@@ -115,29 +138,12 @@ sf::Vector2f generateStarmap(std::vector<Star::star> & _list, const int& _y, con
         }
     }
 
-    for (unsigned int i = 0; i < _list.size(); i++)
-    {
-        if(i%width != 0)
-        {
-            _list[i].add(&_list[i - 1]);
-        }
-        if((i + 1)%width != 0)
-        {
-            _list[i].add(&_list[i + 1]);
-        }
-        if(i > width)
-        {
-            _list[i].add(&_list[i - width]);
-        }
-        if(i + width < _list.size())
-        {
-            _list[i].add(&_list[i + width]);
-        }
-    }
+    connectStars(_list, width);
+
     return homeworld_pos;
 }
 
-bool addColony(Star::star& _starar, shipmapRender& _ships)
+bool addColony(Star::star &_starar, shipmapRender &_ships)
 {
     Star::star* nearby = _starar.isNearbySupplied();
     if(nearby != nullptr)
@@ -148,25 +154,24 @@ bool addColony(Star::star& _starar, shipmapRender& _ships)
     return false;
 }
 
-void updateYear(sf::Text& _text, const unsigned int& year)
+void updateYear(sf::Text &_text, const unsigned int &year)
 {
     std::stringstream t;
     t<<year;
     _text.setString(t.str());
 }
 
-void save(const unsigned int& _year, const uint8_t& _year_clock, const std::vector<Star::star>& _starlist, const shipmapRender& _ships)
+void save(const unsigned int &_year, const uint8_t &_year_clock, const std::vector<Star::star> &_starlist, const shipmapRender &_ships)
 {
     std::ofstream out("autosave.sav");
     if(out.is_open())
     {
-        out<<_year<<" "<<static_cast<unsigned int>(_year_clock)<<"\n";
-        for(auto _star = _starlist.begin(); _star != _starlist.end(); _star++)
+        out<<_year<<" "<<static_cast<unsigned int>(_year_clock)<<" "<<_starlist.size()<<"\n";
+        for(const auto &_star : _starlist)
         {
-            out<<_star->m_pos.x<<" "<<_star->m_pos.y<<" "<<static_cast<unsigned int>(_star->m_size)<<" "<<static_cast<unsigned int>(_star->m_type)<<" "
-                <<_star->m_supplies<<" "<<_star->m_production<<" "<<_star->m_maxProduction<<" "<<_star->m_population<<" "<<_star->m_maxPopulation<<"\n";
+            out<<_star.m_pos.x<<" "<<_star.m_pos.y<<" "<<static_cast<unsigned int>(_star.m_size)<<" "<<static_cast<unsigned int>(_star.m_type)<<" "
+                <<_star.m_supplies<<" "<<_star.m_production<<" "<<_star.m_maxProduction<<" "<<_star.m_population<<" "<<_star.m_maxPopulation<<"\n";
         }
-        out<<"-\n";
         for(auto _ship = _ships.shipsBegin(); _ship != _ships.shipsEnd(); _ship++)
         {
             out<<_ship->m_pos->m_index<<" "<<_ship->m_goal->m_index<<" "<<static_cast<unsigned int>(_ship->dt)<<" "<<_ship->m_hasSupplies<<" "<<_ship->m_hasPopulation<<"\n";
@@ -175,20 +180,38 @@ void save(const unsigned int& _year, const uint8_t& _year_clock, const std::vect
     }
 }
 
-bool load(unsigned int& _year, uint8_t& _year_clock, std::vector<Star::star>& _starlist, shipmapRender& _ships)
+bool load(unsigned int &_year, uint8_t &_year_clock, std::vector<Star::star> &_starlist, shipmapRender &_ships, const int &_x)
 {
     std::ifstream in("autosave.sav");
     if(in.is_open())
     {
-        in>>_year>>" ">>_year_clock>>"\n";
-        for(auto _star = _starlist.begin(); _star != _starlist.end(); _star++)
+        sf::Vector2f pos(0, 0);
+        unsigned int start(0), goal(0), dt(0), type(0), size(0), year_clock(0);
+        bool s_supplies, s_population;
+        int supplies(0), production(0), maxProduction(0), population(0), maxPopulation(0), star_size(0);
+
+        in>>_year>>year_clock>>star_size;
+        _year_clock = year_clock;
+
+        for(int i = 0; i < star_size; i++)
         {
-            in>>_star->m_pos.x>>" ">>_star->m_pos.y>>" ">>_star->m_size>>" ">>static_cast<int>(_star->m_type)>>" "
-                >>_star->m_supplies>>" ">>_star->m_production>>" ">>_star->m_maxProduction>>" ">>_star->m_population>>" ">>_star->m_maxPopulation>>"\n";
+            in>>pos.x>>pos.y>>size>>type>>supplies>>production>>maxProduction>>population>>maxPopulation;
+
+            _starlist.push_back( Star::star(pos.x, pos.y, static_cast<Star::type>(type), _starlist.size()) );
+            _starlist.back().m_size = size;
+            _starlist.back().m_supplies = supplies;
+            _starlist.back().m_production = production;
+            _starlist.back().m_maxProduction = maxProduction;
+            _starlist.back().m_population = population;
+            _starlist.back().m_maxPopulation = maxPopulation;
         }
-        for(auto _ship = _ships.shipsBegin(); _ship != _ships.shipsEnd(); _ship++)
+        connectStars(_starlist, _x/TILE_SIZE);
+
+        while(in>>start)
         {
-            in>>_ship->m_pos->m_index>>" ">>_ship->m_goal->m_index>>" ">>_ship->dt>>" ">>_ship->m_hasSupplies>>" ">>_ship->m_hasPopulation>>"\n";
+            in>>goal>>dt>>s_supplies>>s_population;
+
+            _ships.load(&_starlist[start], &_starlist[goal], dt, s_supplies, s_population);
         }
         in.close();
         return true;
@@ -196,7 +219,7 @@ bool load(unsigned int& _year, uint8_t& _year_clock, std::vector<Star::star>& _s
     return false;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     sf::RenderWindow window(sf::VideoMode(1280, 960), "Space test: F8/F11 = Screenshot, Space = reset");
     window.setFramerateLimit(60);
@@ -206,7 +229,12 @@ int main()
     uint8_t year_clock(0);
     sf::Clock _timer;
     int old_mouse_x(0), old_mouse_y(0);
-    bool hasFocus(true);
+    bool hasFocus(true), runIntro(false), shrinking(false), isPlaying(true), autoplay(false);
+
+    if(argc > 1 && (std::string(argv[1]) == "-auto"))
+    {
+        autoplay = true;
+    }
 
     sf::Font font;
     if(!font.loadFromFile("Dos_font.ttf"))
@@ -235,16 +263,31 @@ int main()
     std::vector<Star::star> starlist;
     starmapRender starRender;
     shipmapRender shipRender;
-    bool isPlaying(true), runIntro(false);
-    sf::Vector2f start_pos(0, 0);
 
-    if(!load(year, year_clock, starlist, shipRender))
+    sf::Vector2f start_pos(0, 0), gui_start_pos(0, 0);
+    sf::Text _intro;
+    sf::RectangleShape _bg;
+
+    if(!load(year, year_clock, starlist, shipRender, window.getSize().x))
     {
         start_pos = generateStarmap(starlist, window.getSize().y, window.getSize().x);
-        starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
+
         isPlaying = false;
         runIntro = true;
+
+        _intro.setString("Welcome to the galaxy. Populate everything to win.\n<Space>: Pause. <g>: Toggle Grid. <Escape>: Close Game");
+        _intro.setFont(font);
+        _intro.setPosition(window.getSize().x/2 - _intro.getGlobalBounds().width/2, window.getSize().y/2 - _intro.getGlobalBounds().height/2);
+
+        _bg.setSize(sf::Vector2f(_intro.getGlobalBounds().width + 10, _intro.getGlobalBounds().height + 10));
+        _bg.setFillColor(sf::Color::Black);
+        _bg.setOutlineColor(sf::Color::White);
+        _bg.setOutlineThickness(1);
+        _bg.setOrigin(_bg.getSize().x/2, 0);
+        gui_start_pos = sf::Vector2f(_intro.getGlobalBounds().left - 5 + _bg.getSize().x/2, _intro.getGlobalBounds().top - 5);
+        _bg.setPosition(gui_start_pos);
     }
+    starRender.load(starlist, window.getSize().x, window.getSize().y, TILE_SIZE);
 
     while (window.isOpen())
     {
@@ -286,6 +329,11 @@ int main()
                     default:
                         break;
                 }
+                if(runIntro)
+                {
+                    shrinking = true;
+                    isPlaying = false;
+                }
             }
             if((event.type == sf::Event::MouseMoved) && (hasFocus))
             {
@@ -307,9 +355,14 @@ int main()
             }
             if((event.type == sf::Event::MouseButtonReleased) && (hasFocus))
             {
-                if(!addColony(starlist.at(currentSelection), shipRender))
+                if(runIntro)
                 {
-                    header.setString("Cannot colonize so far from a populated star.");
+                    shrinking = true;
+                } else {
+                    if(!addColony(starlist.at(currentSelection), shipRender))
+                    {
+                        header.setString("Cannot colonize so far from a populated star.");
+                    }
                 }
             }
         }
@@ -322,15 +375,42 @@ int main()
                 year_clock = 0;
                 year++;
                 updateYear(date, year);
-                for(auto st = starlist.begin(); st != starlist.end(); st++)
+                for(auto &st : starlist)
                 {
-                    st->update();
+                    if(autoplay)
+                    {
+                        addColony(st, shipRender);
+                    }
+                    st.update();
                 }
                 header.setString(starlist.at(currentSelection).toString());
             }
             shipRender.update(starRender);
             _timer.restart();
             year_display.setSize(sf::Vector2f( window.getSize().x * (year_clock/100.f), 40) );
+        }
+
+        if(shrinking && _timer.getElapsedTime().asMilliseconds() > 25)
+        {
+            year_clock++;
+
+            if(_bg.getSize().y > 10)
+            {
+                _bg.setSize(sf::Vector2f((_intro.getGlobalBounds().width + 10)/(year_clock/2), _bg.getSize().y - 1));
+            } else {
+                _bg.setSize(sf::Vector2f((_intro.getGlobalBounds().width + 10)/(year_clock/2), _bg.getSize().y));
+            }
+            _bg.setOrigin(_bg.getSize().x/2, 0);
+            _bg.setPosition(gui_start_pos.x + (start_pos.x - gui_start_pos.x) * year_clock/100.f, gui_start_pos.y + (start_pos.y - gui_start_pos.y) * year_clock/100.f);
+
+            _timer.restart();
+            if(year_clock >= 100)
+            {
+                year_clock = 0;
+                shrinking = false;
+                runIntro = false;
+                isPlaying = true;
+            }
         }
 
         window.clear();
@@ -340,6 +420,15 @@ int main()
         window.draw(header);
         window.draw(date);
         window.draw(cursor);
+        if(runIntro)
+        {
+            window.draw(_bg);
+            if(!shrinking)
+            {
+                window.draw(_intro);
+            }
+        }
+
         window.display();
     }
 

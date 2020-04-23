@@ -7,19 +7,19 @@
 class starmapRender : public sf::Drawable, public sf::Transformable
 {
 private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-    void generateStarGraphic(sf::Vertex*, const sf::Vector2f&, const uint8_t&, sf::Color, const bool&);
+    virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const;
+    void generateStarGraphic(sf::Vertex *, const sf::Vector2f &, const uint8_t &, sf::Color, const bool &);
 
     sf::VertexArray m_vertices;
     sf::VertexArray m_lines;
     bool m_displayGrid;
 public:
-    void load(const std::vector<Star::star>&, const unsigned int&, const unsigned int&, const int&);
+    void load(const std::vector<Star::star> &, const unsigned int &, const unsigned int &, const int &);
     void update(const int&, const bool&);
     void toggleGrid();
 };
 
-void starmapRender::load(const std::vector<Star::star>& starlist, const unsigned int& _width, const unsigned int& _height, const int& TILE_SIZE)
+void starmapRender::load(const std::vector<Star::star> &starlist, const unsigned int &_width, const unsigned int &_height, const int &TILE_SIZE)
 {
     m_vertices.clear();
 
@@ -57,7 +57,7 @@ void starmapRender::load(const std::vector<Star::star>& starlist, const unsigned
     m_displayGrid = true;
 }
 
-void starmapRender::draw(sf::RenderTarget& target, sf::RenderStates states) const
+void starmapRender::draw(sf::RenderTarget &target, sf::RenderStates states) const
 {
     // apply the transform
     states.transform *= getTransform();
@@ -70,7 +70,7 @@ void starmapRender::draw(sf::RenderTarget& target, sf::RenderStates states) cons
     }
 }
 
-void starmapRender::generateStarGraphic(sf::Vertex* quad, const sf::Vector2f& _pos, const uint8_t& _size, sf::Color _colour, const bool& _isPopulated)
+void starmapRender::generateStarGraphic(sf::Vertex *quad, const sf::Vector2f &_pos, const uint8_t &_size, sf::Color _colour, const bool &_isPopulated)
 {
     //top part
     quad[0].position = sf::Vector2f(_pos.x - _size/2, _pos.y);
@@ -153,15 +153,22 @@ struct ship
     uint8_t dt;
     bool m_hasSupplies, m_hasPopulation;
 
-    ship(Star::star* _pos, Star::star* _goal)
+    ship(Star::star *_pos, Star::star *_goal, const uint8_t &_dt)
     {
         m_pos = _pos;
         m_goal = _goal;
-        dt = 0;
-        start();
+        dt = _dt;
     }
 
-    sf::Vector2f update(starmapRender & _map)
+    sf::Vector2f calcPosition()
+    {
+        sf::Vector2f t;
+        t.x = m_pos->m_pos.x + (m_goal->m_pos.x - m_pos->m_pos.x) * dt/100.f;
+        t.y = m_pos->m_pos.y + (t.x - m_pos->m_pos.x) * (m_goal->m_pos.y - m_pos->m_pos.y)/(m_goal->m_pos.x - m_pos->m_pos.x);
+        return t;
+    }
+
+    sf::Vector2f update(starmapRender &_map)
     {
         dt++;
         if(dt >= 100)
@@ -175,11 +182,7 @@ struct ship
             m_goal = t;
             return m_pos->m_pos;
         }
-        sf::Vector2f t;
-        t.x = m_pos->m_pos.x + (m_goal->m_pos.x - m_pos->m_pos.x) * dt/100.f;
-        //do a movement
-        t.y = m_pos->m_pos.y + (t.x - m_pos->m_pos.x) * (m_goal->m_pos.y - m_pos->m_pos.y)/(m_goal->m_pos.x - m_pos->m_pos.x);
-        return t;
+        return calcPosition();
     }
 
     void start()
@@ -227,11 +230,13 @@ private:
     sf::VertexArray m_vertices;
     std::vector<ship> m_ships;
 public:
-    bool load();
-    void add(Star::star*, Star::star*);
+    shipmapRender();
+    void add(Star::star *, Star::star *);
     void update(starmapRender &);
+
     std::vector<ship>::const_iterator shipsBegin() const { return m_ships.begin(); };
     std::vector<ship>::const_iterator shipsEnd() const { return m_ships.end(); };
+    void load(Star::star*, Star::star*, const uint8_t &, const bool&, const bool&);
 };
 
 shipmapRender::shipmapRender()
@@ -242,13 +247,14 @@ shipmapRender::shipmapRender()
     m_ships.clear();
 }
 
-void shipmapRender::add(Star::star* _pos, Star::star* _goal)
+void shipmapRender::add(Star::star *_pos, Star::star *_goal)
 {
     m_vertices.append(sf::Vertex(_pos->m_pos, sf::Color::White));
-    m_ships.push_back(ship(_pos, _goal));
+    m_ships.push_back(ship(_pos, _goal, 0));
+    m_ships.back().start();
 }
 
-void shipmapRender::update(starmapRender & _map)
+void shipmapRender::update(starmapRender &_map)
 {
     //move the ships around a bit
     for(unsigned int i = 0; i < m_ships.size(); i++)
@@ -257,11 +263,20 @@ void shipmapRender::update(starmapRender & _map)
     }
 }
 
-void shipmapRender::draw(sf::RenderTarget& target, sf::RenderStates states) const
+void shipmapRender::draw(sf::RenderTarget &target, sf::RenderStates states) const
 {
     // apply the transform
     states.transform *= getTransform();
 
     // draw the vertex array
     target.draw(m_vertices, states);
+}
+
+void shipmapRender::load(Star::star *_pos, Star::star *_goal, const uint8_t &_dt, const bool &_supplies, const bool &_population)
+{
+    m_ships.push_back(ship(_pos, _goal, _dt));
+    m_ships.back().m_hasSupplies = _supplies;
+    m_ships.back().m_hasPopulation = _population;
+    m_vertices.append(sf::Vertex(m_ships.back().calcPosition(), sf::Color::White));
+    printf("ship size: %d\n", m_vertices.getVertexCount());
 }
