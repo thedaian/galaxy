@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include <SFML/Graphics.hpp>
-#include "vertex_wrapper.hpp"
+#include <engine/vertex_wrapper.hpp>
 
 const uint8_t TILE_SIZE = 50;
 
@@ -29,7 +29,9 @@ void takeScreenshot(sf::RenderWindow  &window)
     //filename<<"screenshot"<<number<<".png";
     filename = "screenshot.png";
 
-    sf::Image Screen = window.capture();
+    sf::Texture temp_texture;
+    temp_texture.update(window);
+    sf::Image Screen = temp_texture.copyToImage();
     Screen.saveToFile(filename);
     number++;
 }
@@ -237,7 +239,7 @@ int main(int argc, char* argv[])
     }
 
     sf::Font font;
-    if(!font.loadFromFile("Dos_font.ttf"))
+    if(!font.loadFromFile("res/Dos_font.ttf"))
     {
         sf::err()<<"Error loading Dos_font.ttf";
         return 1;
